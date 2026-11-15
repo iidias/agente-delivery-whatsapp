@@ -1,0 +1,35 @@
+# Ajuste o fuso (TZ) para o da sua loja, o mesmo usado em preparar-mensagem.js e gerar_fluxo.py.
+services:
+  waha:
+    image: devlikeapro/waha
+    container_name: waha
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - WHATSAPP_DEFAULT_ENGINE=WEBJS        # NOWEB é mais leve (sem navegador); troque se o PC estiver apertado
+      - WHATSAPP_START_SESSION=default       # reconecta sozinho quando o container reinicia
+      - WHATSAPP_HOOK_URL=http://n8n:5678/webhook/waha
+      - WHATSAPP_HOOK_EVENTS=message
+      - TZ=America/Sao_Paulo
+    ports:
+      - "127.0.0.1:3000:3000"                # painel e QR code, só neste computador
+    volumes:
+      - waha_sessions:/app/.sessions         # guarda o login: sem isso precisa ler o QR de novo a cada reinício
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n
+    restart: unless-stopped
+    environment:
+      - GENERIC_TIMEZONE=America/Sao_Paulo
+      - TZ=America/Sao_Paulo
+    ports:
+      - "127.0.0.1:5679:5678"                # n8n em http://localhost:5679
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      - waha
+
+volumes:
+  waha_sessions:
+  n8n_data:
